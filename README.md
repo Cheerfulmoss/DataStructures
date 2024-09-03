@@ -6,6 +6,7 @@ This project provides a macro-based implementation of a generic list (dynamic ar
 - [Importing the List](#importing-the-list)
 - [Functionality](#functionality)
   - [Creating a New List](#creating-a-new-list)
+  - [Length and Capacity](#length-and-capacity)
   - [Appending Elements](#appending-elements)
   - [Accessing Elements](#accessing-elements)
   - [Inserting Elements](#inserting-elements)
@@ -13,6 +14,7 @@ This project provides a macro-based implementation of a generic list (dynamic ar
   - [Finding Elements](#find)
   - [For Each](#for-each)
   - [Sorting and Shuffling](#sorting-and-shuffling)
+  - [Reversing](#reversing)
   - [Slicing the List](#slicing-the-list)
   - [Clearing and Destroying the List](#clearing-and-destroying-the-list)
 - [License](#license)
@@ -35,12 +37,31 @@ IMPORT_LIST(int, intList)
 ```
 This creates an `intList` type that is a pointer to a structure managing an array of integers.
 
+## Defined Types and Structs
+There are the generated types from using `IMPORT_LIST`, but there are also two other types defined, `ssize_t` and `compare_func`. There is also `ListErrors` which is an enum holding the errors some methods return.
+### `ssize_t`
+This is a `signed size_t` that is all, it is used as the sorting algorithm requires a negative value.
+### `compare_func`
+The prototype for the comparison function used in the `sort` and `find` methods.
+
 ## Functionality
 ### Creating a New List
 To create a new list, use the `NEW` macro:
 ```c
 intList my_list = NEW(intList);
 ```
+
+### Length and Capacity
+The list has two attributes, length and capacity. The length of the list is the length of the actual content within the list. The capacity is how much room it takes up in memory, essentially a buffer.
+#### Length
+```c
+ssize_t size = my_list->len(my_list);
+```
+#### Capacity
+```c
+ssize_t capacity = my_list->cap(my_list);
+```
+
 
 ### Appending Elements
 To append an element to the list:
@@ -143,6 +164,12 @@ my_list->sort(my_list, 0, my_list->len(my_list) - 1, compare_ints);
 ```c
 // Shuffle the array between 0 and the end (inclusive).
 my_list->shuffle(my_list, 0, my_list->len(my_list) - 1);
+```
+
+### Reversing
+Reverses the list.
+```c
+my_list->reverse(my_list);
 ```
 
 ### List Slicing
