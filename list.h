@@ -1,6 +1,7 @@
-
 // Created by alex on 2/09/2024.
 //
+// This implementation of a generic list was inspired by the work of TheBrokenPipe.
+// Original source: https://github.com/TheBrokenPipe/CListTemplate/blob/main/list.h
 
 #ifndef DATASTRUCTURES_LIST_H
 #define DATASTRUCTURES_LIST_H
