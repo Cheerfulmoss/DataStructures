@@ -44,7 +44,7 @@ intList my_list = NEW(intList);
 To append an element to the list:
 ```c
 if (my_list->append(my_list, 42) == 0)
-    printf("Appending was successful\n");
+	printf("Appending was successful\n");
 ```
 
 ### Accessing Elements
@@ -66,7 +66,7 @@ To insert an element:
 ```c
 // Insert the element 99 at index 1.
 if (my_list->insert(my_list, 1, 99) == 0)
-    printf("Insertion successful\n");
+	printf("Insertion successful\n");
 ```
 
 ### Removing Elements
@@ -74,7 +74,7 @@ To remove (pop) an element at a specified index:
 ```c
 int removed;
 if (my_list->pop(my_list, 0, &remove) == 0)
-    printf("Removed the element %d\n", removed);
+	printf("Removed the element %d\n", removed);
 ```
 
 ### Sorting and Shuffling
@@ -82,7 +82,7 @@ if (my_list->pop(my_list, 0, &remove) == 0)
 ```c
 // Define a comparison function
 int compare_ints(const void *a, const void *b) {
-    return (*(int*)a - *(int*)b);
+	return (*(int*)a - *(int*)b);
 }
 
 // Sort the values between the range 0 to the end of the list. 
