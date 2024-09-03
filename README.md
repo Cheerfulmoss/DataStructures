@@ -10,6 +10,8 @@ This project provides a macro-based implementation of a generic list (dynamic ar
   - [Accessing Elements](#accessing-elements)
   - [Inserting Elements](#inserting-elements)
   - [Removing Elements](#removing-elements)
+  - [For Each](#for-each)
+  - [Finding Elements](#find)
   - [Sorting and Shuffling](#sorting-and-shuffling)
   - [Slicing the List](#slicing-the-list)
   - [Clearing and Destroying the List](#clearing-and-destroying-the-list)
@@ -75,6 +77,53 @@ To remove (pop) an element at a specified index:
 int removed;
 if (my_list->pop(my_list, 0, &remove) == 0)
 	printf("Removed the element %d\n", removed);
+```
+
+### Find
+Find the first occurrence of an element in the list.
+```
+int compare_ints(const void* a, const void* b) {
+    const int* int_a = (const int*)a;
+    const int* int_b = (const int*)b;
+
+    return (*int_a > *int_b) - (*int_a < *int_b);
+}
+
+int main(void) {
+    ... /* Setup code for list, filling it, etc */
+    ssize_t index = my_list->find(my_list, 5531, compare_ints);
+    // If 5531 is not in the list index will be -1, otherwise 
+    // it'll be the index where the element was found.
+}
+```
+
+### For Each
+There is a for-each function which executes a function on each element in the list.
+```c
+int print_item(IntList list, ssize_t index) {
+    if (!index) printf("[");
+    int val;
+    int retCode = list->get(list, index, &val);
+    if (retCode) return retCode;
+    printf("%d", val);
+    if (index < list->len(list) - 1) printf(", ");
+    else printf("]\n");
+    return 0;
+}
+
+int main(void) {
+    intList list = NEW(intList);
+    for (int i = 0; i < 20; i++) {
+        if (list->append(list, i)) goto EXIT;
+    }
+    
+    int retCode = list->foreach(list, print_item);
+    list->destroy(list);
+    return retCode;
+EXIT:
+    list->destroy(list);
+    return 1;
+}
 ```
 
 ### Sorting and Shuffling
