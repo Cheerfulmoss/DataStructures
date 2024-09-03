@@ -81,7 +81,7 @@ if (my_list->pop(my_list, 0, &remove) == 0)
 
 ### Find
 Find the first occurrence of an element in the list.
-```
+```c
 int compare_ints(const void* a, const void* b) {
     const int* int_a = (const int*)a;
     const int* int_b = (const int*)b;
