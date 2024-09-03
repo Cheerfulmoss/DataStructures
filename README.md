@@ -175,7 +175,7 @@ my_list->reverse(my_list);
 ### List Slicing
 Create a new list from a slice of the existing list.
 ```c
-// slice(src_list, start, stop, end), endpoints are inclusive.
+// slice(src_list, start, stop, step), endpoints are inclusive.
 int_list sliced_list = my_list->slice(my_list, 1, 3, 1);
 ```
 
