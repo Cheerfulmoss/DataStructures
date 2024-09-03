@@ -23,98 +23,92 @@ typedef enum {
     UNINITIALISED_ARRAY = 3,
 } ListErrors;
 
-#define IMPORT_LIST(type, container)                                           \
-typedef struct _##container {                                                  \
+#define IMPORT_LIST(T, L)                                                      \
+typedef struct _##L                                                            \
+{                                                                              \
     ssize_t size;                                                              \
     ssize_t capacity;                                                          \
-    type *data;                                                                \
+    T *data;                                                                   \
                                                                                \
-    int (*get)(struct _##container*, ssize_t, type*);                          \
-    int (*set)(struct _##container*, ssize_t, type);                           \
-    ssize_t (*len)(struct _##container*);                                      \
-    ssize_t (*cap)(struct _##container*);                                      \
-    int (*append)(struct _##container*, type);                                 \
-    int (*pop)(struct _##container*, ssize_t, type*);                          \
-    int (*insert)(struct _##container*, ssize_t, type);                        \
-    void (*sort)(struct _##container*, ssize_t, ssize_t, compare_func);        \
-    int (*foreach)(struct _##container*, int (struct _##container*, ssize_t)); \
-    ssize_t (*find)(struct _##container*, type, compare_func);                 \
-    int (*shuffle)(struct _##container*, ssize_t, ssize_t);                    \
-    struct _##container* (*slice)(struct _##container*, ssize_t, ssize_t,      \
-        ssize_t);                                                              \
-    void (*reverse)(struct _##container*);                                     \
-    void (*clear)(struct _##container*);                                       \
-    void (*destroy)(struct _##container*);                                     \
-    int (*resize)(struct _##container*);                                       \
-} _##container;                                                                \
+    int (*get)(struct _##L*, ssize_t, T*);                                     \
+    int (*set)(struct _##L*, ssize_t, T);                                      \
+    ssize_t (*len)(struct _##L*);                                              \
+    ssize_t (*cap)(struct _##L*);                                              \
+    int (*append)(struct _##L*, T);                                            \
+    int (*pop)(struct _##L*, ssize_t, T*);                                     \
+    int (*insert)(struct _##L*, ssize_t, T);                                   \
+    void (*sort)(struct _##L*, ssize_t, ssize_t, compare_func);                \
+    int (*foreach)(struct _##L*, int (struct _##L*, ssize_t));                 \
+    ssize_t (*find)(struct _##L*, T, compare_func);                            \
+    int (*shuffle)(struct _##L*, ssize_t, ssize_t);                            \
+    struct _##L* (*slice)(struct _##L*, ssize_t, ssize_t, ssize_t);            \
+    void (*reverse)(struct _##L*);                                             \
+    void (*clear)(struct _##L*);                                               \
+    void (*destroy)(struct _##L*);                                             \
+    int (*resize)(struct _##L*);                                               \
+} _##L;                                                                        \
                                                                                \
-typedef _##container *container;                                               \
-typedef int (*foreach_func_##container)(container, ssize_t);                   \
+typedef _##L *L;                                                               \
+typedef int (*foreach_func_##L)(L, ssize_t);                                   \
                                                                                \
-static int container##_resize(container list);                                 \
-static int container##_get(container list, ssize_t index, type* result);       \
-static int container##_set(container list, ssize_t index, type element);       \
-static ssize_t container##_size(container list);                               \
-static ssize_t container##_capacity(container list);                           \
-static int container##_append(container list, type element);                   \
-static int container##_pop(container list, ssize_t index, type *result);       \
-static int container##_insert(container list, ssize_t index, type element);    \
-static void container##_sort(container list, ssize_t left, ssize_t right,      \
-                             compare_func cmp);                                \
-static ssize_t container##_find(container list, type element,                  \
-                                compare_func cmp);                             \
-static int container##_foreach(container list, foreach_func_##container func); \
-static container container##_slice(container list, ssize_t left,               \
-                                    ssize_t right, ssize_t step);              \
-static int container##_shuffle(container list, ssize_t left, ssize_t right);   \
-static void container##_reverse(container list);                               \
-static void container##_clear(container list);                                 \
-static void container##_destroy(container list);                               \
+static int L##_resize(L list);                                                 \
+static int L##_get(L list, ssize_t index, T* result);                          \
+static int L##_set(L list, ssize_t index, T element);                          \
+static ssize_t L##_size(L list);                                               \
+static ssize_t L##_capacity(L list);                                           \
+static int L##_append(L list, T element);                                      \
+static int L##_pop(L list, ssize_t index, T *result);                          \
+static int L##_insert(L list, ssize_t index, T element);                       \
+static void L##_sort(L list, ssize_t left, ssize_t right, compare_func cmp);   \
+static ssize_t L##_find(L list, T element, compare_func cmp);                  \
+static int L##_foreach(L list, foreach_func_##L func);                         \
+static L L##_slice(L list, ssize_t left, ssize_t right, ssize_t step);         \
+static int L##_shuffle(L list, ssize_t left, ssize_t right);                   \
+static void L##_reverse(L list);                                               \
+static void L##_clear(L list);                                                 \
+static void L##_destroy(L list);                                               \
                                                                                \
-static ssize_t container##_size(container list)                                \
+static ssize_t L##_size(L list)                                                \
 {                                                                              \
     return list->size;                                                         \
 }                                                                              \
                                                                                \
-static ssize_t container##_capacity(container list)                            \
+static ssize_t L##_capacity(L list)                                            \
 {                                                                              \
     return list->capacity;                                                     \
 }                                                                              \
                                                                                \
-static container container##_new()                                             \
+static L L##_new()                                                             \
 {                                                                              \
-    container result = (container)calloc(1, sizeof(_##container));             \
+    L result = (L)calloc(1, sizeof(_##L));                                     \
     if (result) {                                                              \
         result->data = NULL;                                                   \
         result->capacity = 0;                                                  \
         result->size = 0;                                                      \
                                                                                \
         /* Function APIs */                                                    \
-        result->get = container##_get; result->set = container##_set;          \
-        result->len = container##_size; result->append = container##_append;   \
-        result->pop = container##_pop; result->insert = container##_insert;    \
-        result->clear = container##_clear; result->cap = container##_capacity; \
-        result->destroy = container##_destroy;                                 \
-        result->sort = container##_sort;                                       \
-        result->foreach = container##_foreach;                                 \
-        result->find = container##_find;                                       \
-        result->shuffle = container##_shuffle;                                 \
-        result->resize = container##_resize;                                   \
-        result->reverse = container##_reverse;                                 \
-        result->slice = container##_slice;                                     \
+        result->get = L##_get; result->set = L##_set;                          \
+        result->len = L##_size; result->append = L##_append;                   \
+        result->pop = L##_pop; result->insert = L##_insert;                    \
+        result->clear = L##_clear; result->cap = L##_capacity;                 \
+        result->destroy = L##_destroy; result->sort = L##_sort;                \
+        result->foreach = L##_foreach; result->find = L##_find;                \
+        result->shuffle = L##_shuffle; result->resize = L##_resize;            \
+        result->reverse = L##_reverse; result->slice = L##_slice;              \
     }                                                                          \
     return result;                                                             \
 }                                                                              \
                                                                                \
-static int container##_get(container list, ssize_t index, type* result)        \
+static int L##_get(L list, ssize_t index, T* result)                           \
 {                                                                              \
     if (!list) return UNINITIALISED_ARRAY;                                     \
     if (list->len(list) <= index) return INDEX_OUT_OF_RANGE;                   \
     *result = list->data[index];                                               \
+                                                                               \
     return 0;                                                                  \
 }                                                                              \
                                                                                \
-static int container##_set(container list, ssize_t index, type element)        \
+static int L##_set(L list, ssize_t index, T element)                           \
 {                                                                              \
     if (!list) return UNINITIALISED_ARRAY;                                     \
     if (list->len(list) <= index) return INDEX_OUT_OF_RANGE;                   \
@@ -122,7 +116,7 @@ static int container##_set(container list, ssize_t index, type element)        \
     return 0;                                                                  \
 }                                                                              \
                                                                                \
-static int container##_append(container list, type element)                    \
+static int L##_append(L list, T element)                                       \
 {                                                                              \
     int retCode;                                                               \
     if ((retCode = list->resize(list))) return retCode;                        \
@@ -130,19 +124,20 @@ static int container##_append(container list, type element)                    \
     return retCode;                                                            \
 }                                                                              \
                                                                                \
-static int container##_pop(container list, ssize_t index, type *result) {      \
-    if (index >= container##_size(list)) {                                     \
+static int L##_pop(L list, ssize_t index, T *result)                           \
+{                                                                              \
+    if (index >= L##_size(list)) {                                             \
         return INDEX_OUT_OF_RANGE;                                             \
     }                                                                          \
     *result = list->data[index];                                               \
     memmove(&list->data[index], &list->data[index + 1],                        \
-            (--(list->size) - index) * sizeof(type));                          \
+            (--(list->size) - index) * sizeof(T));                             \
     int retCode;                                                               \
     if ((retCode = list->resize(list))) return retCode;                        \
     return retCode;                                                            \
 }                                                                              \
                                                                                \
-static int container##_insert(container list, ssize_t index, type element)     \
+static int L##_insert(L list, ssize_t index, T element)                        \
 {                                                                              \
     int retCode = 0;                                                           \
     if (!index && !list->len(list)) {                                          \
@@ -158,12 +153,12 @@ static int container##_insert(container list, ssize_t index, type element)     \
         return retCode;                                                        \
     }                                                                          \
     memmove(&list->data[index + 1], &list->data[index],                        \
-            (list->len(list) - index) * sizeof(type));                         \
+            (list->len(list) - index) * sizeof(T));                            \
     list->data[index] = element;                                               \
     return retCode;                                                            \
 }                                                                              \
                                                                                \
-static void container##_clear(container list)                                  \
+static void L##_clear(L list)                                                  \
 {                                                                              \
     if (!list->data) return;                                                   \
     free(list->data);                                                          \
@@ -172,19 +167,18 @@ static void container##_clear(container list)                                  \
     list->capacity = 0;                                                        \
 }                                                                              \
                                                                                \
-static void container##_destroy(container list)                                \
+static void L##_destroy(L list)                                                \
 {                                                                              \
     if (!list) return;                                                         \
     list->clear(list);                                                         \
     free(list);                                                                \
 }                                                                              \
                                                                                \
-static void container##_sort(container list, ssize_t left, ssize_t right,      \
-                             compare_func cmp)                                 \
+static void L##_sort(L list, ssize_t left, ssize_t right, compare_func cmp)    \
 {                                                                              \
     if (left >= right) return;                                                 \
                                                                                \
-    type pivot = list->data[left + (right - left) / 2];                        \
+    T pivot = list->data[left + (right - left) / 2];                           \
     ssize_t i = left;                                                          \
     ssize_t j = right;                                                         \
                                                                                \
@@ -193,18 +187,18 @@ static void container##_sort(container list, ssize_t left, ssize_t right,      \
         while (cmp(&list->data[j], &pivot) > 0) j--;                           \
                                                                                \
         if (i <= j) {                                                          \
-            type tmp = list->data[i];                                          \
+            T tmp = list->data[i];                                             \
             list->data[i] = list->data[j];                                     \
             list->data[j] = tmp;                                               \
             i++;                                                               \
             j--;                                                               \
         }                                                                      \
     }                                                                          \
-    container##_sort(list, left, j, cmp);                                      \
-    container##_sort(list, i, right, cmp);                                     \
+    L##_sort(list, left, j, cmp);                                              \
+    L##_sort(list, i, right, cmp);                                             \
 }                                                                              \
                                                                                \
-static int container##_foreach(container list, foreach_func_##container func)  \
+static int L##_foreach(L list, foreach_func_##L func)                          \
 {                                                                              \
     if (!list || !list->data || !func) return UNINITIALISED_ARRAY;             \
                                                                                \
@@ -216,8 +210,7 @@ static int container##_foreach(container list, foreach_func_##container func)  \
     return 0;                                                                  \
 }                                                                              \
                                                                                \
-static ssize_t container##_find(container list, type element,                  \
-    compare_func cmp)                                                          \
+static ssize_t L##_find(L list, T element, compare_func cmp)                   \
 {                                                                              \
     for (ssize_t i = 0; i < list->len(list); i++) {                            \
         if (cmp(&list->data[i], &element) == 0) return i;                      \
@@ -225,7 +218,7 @@ static ssize_t container##_find(container list, type element,                  \
     return -1;                                                                 \
 }                                                                              \
                                                                                \
-static int container##_shuffle(container list, ssize_t left, ssize_t right)    \
+static int L##_shuffle(L list, ssize_t left, ssize_t right)                    \
 {                                                                              \
     if (list->size <= 1) return 0;                                             \
                                                                                \
@@ -237,42 +230,41 @@ static int container##_shuffle(container list, ssize_t left, ssize_t right)    \
     for (ssize_t i = right; i > left; i--) {                                   \
         ssize_t j = rand() % (i + 1);                                          \
                                                                                \
-        type tmp = list->data[i];                                              \
+        T tmp = list->data[i];                                                 \
         list->data[i] = list->data[j];                                         \
         list->data[j] = tmp;                                                   \
     }                                                                          \
     return 0;                                                                  \
 }                                                                              \
                                                                                \
-static void container##_reverse(container list)                                \
+static void L##_reverse(L list)                                                \
 {                                                                              \
     for (ssize_t i = 0; i < list->len(list) / 2; i++) {                        \
-        type tmp = list->data[i];                                              \
+        T tmp = list->data[i];                                                 \
         list->data[i] = list->data[list->len(list) - i - 1];                   \
         list->data[list->len(list) - i - 1] = tmp;                             \
     }                                                                          \
 }                                                                              \
                                                                                \
-static container container##_slice(container list,                             \
-    ssize_t left, ssize_t right, ssize_t step)                                 \
+static L L##_slice(L list, ssize_t left, ssize_t right, ssize_t step)          \
 {                                                                              \
-    if (left < 0 || right > list->len(list) || left > right)                   \
+    if (left < 0 || right >= list->len(list) || left > right)                  \
         return NULL;                                                           \
     if (step < 1) return NULL;                                                 \
-    container new_list = container##_new();                                    \
+    L new_list = L##_new();                                                    \
     if (step == 1) {                                                           \
-        new_list->size = right - left / step;                                  \
+        new_list->size = (right - left + 1) / step;                            \
         new_list->resize(new_list);                                            \
         memmove(new_list->data, &list->data[left],                             \
-            (right - left - 1) * sizeof(type));                                \
+            (right - left + 1) * sizeof(T));                                   \
     } else {                                                                   \
-        for (ssize_t i = left; i < right; i += step)                           \
+        for (ssize_t i = left; i <= right; i += step)                          \
             if(new_list->append(new_list, list->data[i])) return NULL;         \
     }                                                                          \
     return new_list;                                                           \
 }                                                                              \
                                                                                \
-static int container##_resize(container list)                                  \
+static int L##_resize(L list)                                                  \
 {                                                                              \
     ssize_t new_capacity = list->capacity;                                     \
     if (list->size >= list->capacity) {                                        \
@@ -284,7 +276,7 @@ static int container##_resize(container list)                                  \
             new_capacity /= 2;                                                 \
         }                                                                      \
     }                                                                          \
-    type *new_data = (type *) realloc(list->data, new_capacity * sizeof(type));\
+    T *new_data = (T *) realloc(list->data, new_capacity * sizeof(T));         \
     if (new_data) {                                                            \
         list->data = new_data;                                                 \
         list->capacity = new_capacity;                                         \
@@ -294,6 +286,6 @@ static int container##_resize(container list)                                  \
 }                                                                              \
                                                                                \
 
-#define NEW(container) container##_new()
+#define NEW(L) L##_new()
 
 #endif //DATASTRUCTURES_LIST_H
