@@ -1,6 +1,3 @@
-memmove(&list->data[index + 1], &list->data[index],
-		(list->len(list) - index) * sizeof(type));# Generic List Implementation in C
-
 This project provides a macro-based implementation of a generic list (dynamic array) in C. The list supports various operations such as appending, inserting, sorting, slicing, and more.
 
 ## Table of Contents
