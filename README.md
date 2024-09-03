@@ -43,9 +43,8 @@ intList my_list = NEW(intList);
 ### Appending Elements
 To append an element to the list:
 ```c
-if (my_list->append(my_list, 42) == 0) {
+if (my_list->append(my_list, 42) == 0)
     printf("Appending was successful\n");
-}
 ```
 
 ### Accessing Elements
@@ -66,18 +65,16 @@ Setting elements is the same however it uses the `set` method.
 To insert an element:
 ```c
 // Insert the element 99 at index 1.
-if (my_list->insert(my_list, 1, 99) == 0) {
+if (my_list->insert(my_list, 1, 99) == 0)
     printf("Insertion successful\n");
-}
 ```
 
 ### Removing Elements
 To remove (pop) an element at a specified index:
 ```c
 int removed;
-if (my_list->pop(my_list, 0, &remove) == 0) {
+if (my_list->pop(my_list, 0, &remove) == 0)
     printf("Removed the element %d\n", removed);
-}
 ```
 
 ### Sorting and Shuffling
