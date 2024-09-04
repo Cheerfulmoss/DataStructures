@@ -286,6 +286,6 @@ static int L##_resize(L list)                                                  \
 }                                                                              \
                                                                                \
 
-#define NEW(L) L##_new()
+#define LNEW(L) L##_new()
 
 #endif //DATASTRUCTURES_LIST_H
