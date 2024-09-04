@@ -46,9 +46,9 @@ The prototype for the comparison function used in the `sort` and `find` methods.
 
 ## Functionality
 ### Creating a New List
-To create a new list, use the `NEW` macro:
+To create a new list, use the `LNEW` macro:
 ```c
-intList my_list = NEW(intList);
+intList my_list = LNEW(intList);
 ```
 
 ### Length and Capacity
@@ -133,7 +133,7 @@ int print_item(IntList list, ssize_t index) {
 }
 
 int main(void) {
-    intList list = NEW(intList);
+    intList list = LNEW(intList);
     for (int i = 0; i < 20; i++) {
         if (list->append(list, i)) goto EXIT;
     }
