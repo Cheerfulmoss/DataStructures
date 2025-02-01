@@ -1,291 +1,336 @@
-// Created by alex on 2/09/2024.
+//
+// Created by cheerfulmoss on 27/01/25.
 //
 // This implementation of a generic list was inspired by the work of TheBrokenPipe.
 // Original source: https://github.com/TheBrokenPipe/CListTemplate/blob/main/list.h
 
-#ifndef DATASTRUCTURES_LIST_H
-#define DATASTRUCTURES_LIST_H
+#ifndef LIST_H
+#define LIST_H
 
-#include <stdlib.h>
+#include <assert.h>
 #include <string.h>
-#include <stdio.h>
 #include <time.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
+size_t next_power_of_two(size_t n) {
+    if (n == 0) return 1;
+    n--;
+    n |= n >> 1;
+    n |= n >> 2;
+    n |= n >> 4;
+    n |= n >> 8;
+    n |= n >> 16;
+#if SIZE_MAX > 0xFFFFFFFF
+    n |= n >> 32;
+#endif
+    return n + 1;
+}
 
-typedef intptr_t ssize_t;
-typedef int (*compare_func)(const void*, const void*);
+#define IMPORT_LIST(TYPE, LABEL, FORMAT_SPECIFIER)\
+\
+typedef struct _##LABEL *LABEL;\
+typedef void (*LABEL##_enumerate_for_each_func)(size_t, TYPE);\
+typedef TYPE (*LABEL##_enumerate_map_func)(LABEL, size_t, TYPE);\
+/* TYPE a < TYPE b = -1, TYPE b < TYPE a = 1, TYPE a == TYPE b = 0 */\
+typedef int (*LABEL##_compare_func)(TYPE, TYPE);\
+\
+typedef struct _##LABEL {\
+    size_t capacity;\
+    size_t length;\
+    TYPE *data;\
+    \
+    size_t (*len)(LABEL);\
+    TYPE (*get)(LABEL, size_t);\
+    LABEL (*set)(LABEL, size_t, TYPE);\
+    LABEL (*resize)(LABEL);\
+    LABEL (*push)(LABEL, TYPE);\
+    void (*destroy)(LABEL);\
+    LABEL (*insert)(LABEL, size_t, TYPE);\
+    LABEL (*enumerate_for_each)(LABEL, LABEL##_enumerate_for_each_func);\
+    LABEL (*enumerate_map)(LABEL, LABEL##_enumerate_map_func);\
+    LABEL (*extend_list)(LABEL, LABEL);\
+    LABEL (*extend_array)(LABEL, TYPE *, size_t);\
+    LABEL (*__allocate__)(LABEL, size_t);\
+    int (*__dumb_random__)(TYPE, TYPE);\
+    TYPE (*pop)(LABEL, size_t);\
+    LABEL (*display)(LABEL);\
+    LABEL (*slice)(LABEL, size_t, size_t, size_t);\
+    LABEL (*copy)(LABEL);\
+    LABEL (*sort)(LABEL, size_t, size_t, LABEL##_compare_func);\
+    LABEL (*shuffle)(LABEL);\
+    size_t (*find)(LABEL, TYPE, LABEL##_compare_func);\
+    LABEL (*clear)(LABEL);\
+    size_t (*count)(LABEL, TYPE, LABEL##_compare_func);\
+} _##LABEL;\
+\
+static size_t LABEL##_len(LABEL);\
+static TYPE LABEL##_get(LABEL, size_t);\
+static LABEL LABEL##_set(LABEL, size_t, TYPE);\
+static LABEL LABEL##_resize(LABEL);\
+static LABEL LABEL##_push(LABEL, TYPE);\
+static void LABEL##_destroy(LABEL);\
+static LABEL LABEL##_insert(LABEL, size_t, TYPE);\
+static LABEL LABEL##_enumerate_for_each(LABEL, LABEL##_enumerate_for_each_func);\
+static LABEL LABEL##_enumerate_map(LABEL, LABEL##_enumerate_map_func);\
+static LABEL LABEL##_extend_list(LABEL, LABEL);\
+static LABEL LABEL##_extend_array(LABEL, TYPE *, size_t);\
+static LABEL LABEL##__allocate__(LABEL, size_t);\
+static int LABEL##__dumb_random__(TYPE, TYPE);\
+static TYPE LABEL##_pop(LABEL, size_t);\
+static LABEL LABEL##_display(LABEL);\
+static LABEL LABEL##_slice(LABEL, size_t, size_t, size_t);\
+static LABEL LABEL##_copy(LABEL);\
+static LABEL LABEL##_sort(LABEL, size_t, size_t, LABEL##_compare_func);\
+static LABEL LABEL##_shuffle(LABEL);\
+static size_t LABEL##_find(LABEL, TYPE, LABEL##_compare_func);\
+static LABEL LABEL##_clear(LABEL);\
+static size_t LABEL##_count(LABEL, TYPE, LABEL##_compare_func);\
+\
+static LABEL LABEL##_new() {\
+    LABEL self = (LABEL)calloc(1, sizeof(_##LABEL));\
+    assert(self != NULL);\
+    self->data = NULL;\
+    self->capacity = 0;\
+    self->length = 0;\
+    self->len = LABEL##_len;\
+    self->get = LABEL##_get;\
+    self->set = LABEL##_set;\
+    self->resize = LABEL##_resize;\
+    self->push = LABEL##_push;\
+    self->destroy = LABEL##_destroy;\
+    self->insert = LABEL##_insert;\
+    self->enumerate_for_each = LABEL##_enumerate_for_each;\
+    self->enumerate_map = LABEL##_enumerate_map;\
+    self->__allocate__ = LABEL##__allocate__;\
+    self->extend_list = LABEL##_extend_list;\
+    self->extend_array = LABEL##_extend_array;\
+    self->pop = LABEL##_pop;\
+    self->display = LABEL##_display;\
+    self->slice = LABEL##_slice;\
+    self->copy = LABEL##_copy;\
+    self->sort = LABEL##_sort;\
+    self->shuffle = LABEL##_shuffle;\
+    self->__dumb_random__ = LABEL##__dumb_random__;\
+    self->find = LABEL##_find;\
+    self->clear = LABEL##_clear;\
+    self->count = LABEL##_count;\
+    \
+    struct timespec ts;\
+    clock_gettime(CLOCK_REALTIME, &ts);\
+    srand(ts.tv_nsec ^ ts.tv_sec);\
+    return self;\
+}\
+\
+static size_t LABEL##_len(LABEL self) { \
+    assert(self != NULL);\
+    return self->length; \
+} \
+static TYPE LABEL##_get(LABEL self, size_t index) {\
+    assert(self != NULL);\
+    assert(index < self->len(self));\
+    return self->data[index];\
+}\
+static LABEL LABEL##_set(LABEL self, size_t index, TYPE value) { \
+    assert(self != NULL);\
+    if (index < 0) {\
+    index = self->len(self) - index;\
+    }\
+    assert(index < self->len(self) && index >= 0);\
+    self->data[index] = value;\
+    return self;\
+}\
+static LABEL LABEL##_resize(LABEL self) {\
+    assert(self != NULL);\
+    size_t new_cap = self->capacity;\
+    size_t lower_threshold = new_cap / 4;\
+    if (self->len(self) <= lower_threshold) {\
+        new_cap /= 2;\
+    } else if (self->len(self) >= self->capacity) {\
+        new_cap *= 2;\
+    }\
+    new_cap = new_cap == 0 ? 1 : new_cap;\
+    TYPE *new_data = (TYPE *)realloc(self->data, new_cap * sizeof(TYPE));\
+    assert(new_data != NULL);\
+    self->data = new_data;\
+    self->capacity = new_cap;\
+    return self;\
+}\
+static LABEL LABEL##__allocate__(LABEL self, size_t new_capacity) {\
+    assert(self != NULL);\
+    assert(new_capacity != 0);\
+    if (new_capacity < self->len(self)) {\
+        return self;\
+    }\
+    TYPE *new_data = (TYPE *)realloc(self->data, new_capacity * sizeof(TYPE));\
+    assert(new_data != NULL);\
+    self->data = new_data;\
+    self->capacity = new_capacity;\
+    return self;\
+}\
+static LABEL LABEL##_push(LABEL self, TYPE value) {\
+    assert(self != NULL);\
+    self->resize(self);\
+    self->data[self->len(self)] = value;\
+    self->length++;\
+    return self;\
+}\
+static LABEL LABEL##_insert(LABEL self, size_t index, TYPE value) {\
+    assert(self != NULL);\
+    self->resize(self);\
+    memmove(&self->data[index + 1], &self->data[index], sizeof(TYPE) * (self->len(self) - index));\
+    self->data[index] = value;\
+    self->length++;\
+    return self;\
+}\
+static LABEL LABEL##_enumerate_for_each(LABEL self, LABEL##_enumerate_for_each_func func) {\
+    assert(self != NULL);\
+    for (size_t i = 0; i < self->len(self); i++) {\
+        func(i, self->get(self, i));\
+    }\
+    return self;\
+}\
+static LABEL LABEL##_enumerate_map(LABEL self, LABEL##_enumerate_map_func func) {\
+    assert(self != NULL);\
+    for (size_t i = 0; i < self->len(self); i++) {\
+        TYPE new_val = func(self, i, self->get(self, i));\
+        self->set(self, i, new_val);\
+    }\
+    return self;\
+}\
+static LABEL LABEL##_extend_array(LABEL self, TYPE *other, size_t length) {\
+    assert(self != NULL);\
+    if (self->len(self) + length > self->capacity) {\
+        self->__allocate__(self, next_power_of_two(self->len(self) + length));\
+    }\
+    memmove(&self->data[self->len(self)], other, length * sizeof(TYPE));\
+    self->length += length;\
+    return self;\
+}\
+static LABEL LABEL##_extend_list(LABEL self, LABEL other) {\
+    assert(self != NULL);\
+    return self->extend_array(self, other->data, other->len(other));\
+}\
+static TYPE LABEL##_pop(LABEL self, size_t index) {\
+    assert(self != NULL);\
+    TYPE value = self->get(self, index);\
+    self->length--;\
+    if (index == self->len(self)) {\
+        return value;\
+    }\
+    memmove(&self->data[index], &self->data[index + 1], (self->len(self) - index) * sizeof(TYPE));\
+    return value;\
+}\
+static LABEL LABEL##_display(LABEL self) {\
+    assert(self != NULL);\
+    char test[] = FORMAT_SPECIFIER;\
+    assert(strlen(test) != 0);\
+    for (size_t i = 0; i < self->len(self); i++) {\
+        if (i == 0) {\
+            printf("{");\
+        }\
+        TYPE element = self->get(self, i);\
+        printf(FORMAT_SPECIFIER, element);\
+        if (i == self->len(self) - 1) {\
+            printf("}");\
+        } else {\
+            printf(", ");\
+        }\
+    }\
+    return self;\
+}\
+static LABEL LABEL##_slice(LABEL self, size_t start, size_t stop, size_t step) {\
+    assert(self != NULL);\
+    assert(self->len(self) >= stop && start <= stop);\
+    LABEL sliced = LABEL##_new();\
+    for (size_t i = start; i < stop; i += step) {\
+        sliced->push(sliced, self->get(self, i));\
+    }\
+    return sliced;\
+}\
+static LABEL LABEL##_copy(LABEL self) {\
+    assert(self != NULL);\
+    LABEL new_list = LABEL##_new();\
+    new_list->length = self->length;\
+    new_list->__allocate__(new_list, self->capacity);\
+    memcpy(new_list->data, self->data, self->len(self) * sizeof(TYPE));\
+    return new_list;\
+}\
+static LABEL LABEL##_sort(LABEL self, size_t left, size_t right, LABEL##_compare_func comp) {\
+    assert(self != NULL);\
+    assert(self->data != NULL);\
+    assert(left < self->len(self));\
+    assert(right < self->len(self));\
+    if (left >= right || right >= self->len(self)) return self;\
+    \
+    size_t mid = left + (right - left) / 2;\
+    assert(mid < self->len(self));\
+    int pivot = self->data[mid];\
+    \
+    size_t i = left;\
+    size_t j = right;\
+    while (i <= j) {\
+        while (i < self->len(self) && comp(self->get(self, i), pivot) < 0) i++;\
+        while (j < self->len(self) && comp(self->get(self, j), pivot) > 0) {\
+            if (j == 0) break;\
+            j--;\
+        }\
+        if (i <= j) {\
+            int tmp = self->get(self, i);\
+            self->set(self, i, self->get(self, j));\
+            self->set(self, j, tmp);\
+            i++;\
+            if (j > 0) j--;\
+        }\
+    }\
+    \
+    if (left < j) self->sort(self, left, j, comp);\
+    if (i < right) self->sort(self, i, right, comp);\
+    return self;\
+}\
+static int LABEL##__dumb_random__(TYPE a, TYPE b) {\
+    (void)a; (void)b;\
+    return (rand() % 3) - 1;\
+}\
+static LABEL LABEL##_shuffle(LABEL self) {\
+    assert(self != NULL);\
+    assert(self->data != NULL);\
+    return self->sort(self, 0, self->len(self) - 1, self->__dumb_random__);\
+}\
+static size_t LABEL##_find(LABEL self, TYPE value, LABEL##_compare_func comp) {\
+    assert(self != NULL);\
+    assert(self->data != NULL);\
+    for (size_t index = 0; index < self->len(self); index++) {\
+        if (comp(self->get(self, index), value) == 0) {\
+            return index;\
+        }\
+    }\
+    return self->len(self);\
+}\
+static LABEL LABEL##_clear(LABEL self) {\
+    assert(self != NULL);\
+    assert(self->data != NULL);\
+    free(self->data);\
+    self->data = NULL;\
+    self->length = 0;\
+    self->capacity = 0;\
+    return self;\
+}\
+static void LABEL##_destroy(LABEL self) {\
+    assert(self != NULL);\
+    if (self->data != NULL) free(self->data);\
+    free(self);\
+}\
+static size_t LABEL##_count(LABEL self, TYPE value, LABEL##_compare_func comp) {\
+    assert(self != NULL);\
+    assert(self->data != NULL);\
+    size_t count = 0;\
+    for (size_t index = 0; index < self->len(self); index++) {\
+        if (comp(self->get(self, index), value) == 0) {\
+            count++;\
+        }\
+    }\
+    return count;\
+}\
 
-typedef enum {
-    MEMORY_ALLOCATION_ERR = 1,
-    INDEX_OUT_OF_RANGE = 2,
-    UNINITIALISED_ARRAY = 3,
-} ListErrors;
-
-#define IMPORT_LIST(T, L)                                                      \
-typedef struct _##L                                                            \
-{                                                                              \
-    ssize_t size;                                                              \
-    ssize_t capacity;                                                          \
-    T *data;                                                                   \
-                                                                               \
-    int (*get)(struct _##L*, ssize_t, T*);                                     \
-    int (*set)(struct _##L*, ssize_t, T);                                      \
-    ssize_t (*len)(struct _##L*);                                              \
-    ssize_t (*cap)(struct _##L*);                                              \
-    int (*append)(struct _##L*, T);                                            \
-    int (*pop)(struct _##L*, ssize_t, T*);                                     \
-    int (*insert)(struct _##L*, ssize_t, T);                                   \
-    void (*sort)(struct _##L*, ssize_t, ssize_t, compare_func);                \
-    int (*foreach)(struct _##L*, int (struct _##L*, ssize_t));                 \
-    ssize_t (*find)(struct _##L*, T, compare_func);                            \
-    int (*shuffle)(struct _##L*, ssize_t, ssize_t);                            \
-    struct _##L* (*slice)(struct _##L*, ssize_t, ssize_t, ssize_t);            \
-    void (*reverse)(struct _##L*);                                             \
-    void (*clear)(struct _##L*);                                               \
-    void (*destroy)(struct _##L*);                                             \
-    int (*resize)(struct _##L*);                                               \
-} _##L;                                                                        \
-                                                                               \
-typedef _##L *L;                                                               \
-typedef int (*foreach_func_##L)(L, ssize_t);                                   \
-                                                                               \
-static int L##_resize(L list);                                                 \
-static int L##_get(L list, ssize_t index, T* result);                          \
-static int L##_set(L list, ssize_t index, T element);                          \
-static ssize_t L##_size(L list);                                               \
-static ssize_t L##_capacity(L list);                                           \
-static int L##_append(L list, T element);                                      \
-static int L##_pop(L list, ssize_t index, T *result);                          \
-static int L##_insert(L list, ssize_t index, T element);                       \
-static void L##_sort(L list, ssize_t left, ssize_t right, compare_func cmp);   \
-static ssize_t L##_find(L list, T element, compare_func cmp);                  \
-static int L##_foreach(L list, foreach_func_##L func);                         \
-static L L##_slice(L list, ssize_t left, ssize_t right, ssize_t step);         \
-static int L##_shuffle(L list, ssize_t left, ssize_t right);                   \
-static void L##_reverse(L list);                                               \
-static void L##_clear(L list);                                                 \
-static void L##_destroy(L list);                                               \
-                                                                               \
-static ssize_t L##_size(L list)                                                \
-{                                                                              \
-    return list->size;                                                         \
-}                                                                              \
-                                                                               \
-static ssize_t L##_capacity(L list)                                            \
-{                                                                              \
-    return list->capacity;                                                     \
-}                                                                              \
-                                                                               \
-static L L##_new()                                                             \
-{                                                                              \
-    L result = (L)calloc(1, sizeof(_##L));                                     \
-    if (result) {                                                              \
-        result->data = NULL;                                                   \
-        result->capacity = 0;                                                  \
-        result->size = 0;                                                      \
-                                                                               \
-        /* Function APIs */                                                    \
-        result->get = L##_get; result->set = L##_set;                          \
-        result->len = L##_size; result->append = L##_append;                   \
-        result->pop = L##_pop; result->insert = L##_insert;                    \
-        result->clear = L##_clear; result->cap = L##_capacity;                 \
-        result->destroy = L##_destroy; result->sort = L##_sort;                \
-        result->foreach = L##_foreach; result->find = L##_find;                \
-        result->shuffle = L##_shuffle; result->resize = L##_resize;            \
-        result->reverse = L##_reverse; result->slice = L##_slice;              \
-    }                                                                          \
-    return result;                                                             \
-}                                                                              \
-                                                                               \
-static int L##_get(L list, ssize_t index, T* result)                           \
-{                                                                              \
-    if (!list) return UNINITIALISED_ARRAY;                                     \
-    if (list->len(list) <= index) return INDEX_OUT_OF_RANGE;                   \
-    *result = list->data[index];                                               \
-                                                                               \
-    return 0;                                                                  \
-}                                                                              \
-                                                                               \
-static int L##_set(L list, ssize_t index, T element)                           \
-{                                                                              \
-    if (!list) return UNINITIALISED_ARRAY;                                     \
-    if (list->len(list) <= index) return INDEX_OUT_OF_RANGE;                   \
-    list->data[index] = element;                                               \
-    return 0;                                                                  \
-}                                                                              \
-                                                                               \
-static int L##_append(L list, T element)                                       \
-{                                                                              \
-    int retCode;                                                               \
-    if ((retCode = list->resize(list))) return retCode;                        \
-    list->data[list->size++] = element;                                        \
-    return retCode;                                                            \
-}                                                                              \
-                                                                               \
-static int L##_pop(L list, ssize_t index, T *result)                           \
-{                                                                              \
-    if (index >= L##_size(list)) {                                             \
-        return INDEX_OUT_OF_RANGE;                                             \
-    }                                                                          \
-    *result = list->data[index];                                               \
-    memmove(&list->data[index], &list->data[index + 1],                        \
-            (--(list->size) - index) * sizeof(T));                             \
-    int retCode;                                                               \
-    if ((retCode = list->resize(list))) return retCode;                        \
-    return retCode;                                                            \
-}                                                                              \
-                                                                               \
-static int L##_insert(L list, ssize_t index, T element)                        \
-{                                                                              \
-    int retCode = 0;                                                           \
-    if (!index && !list->len(list)) {                                          \
-        retCode = list->append(list, element);                                 \
-        return retCode;                                                        \
-    }                                                                          \
-    if (index >= list->len(list)) {                                            \
-        return INDEX_OUT_OF_RANGE;                                             \
-    }                                                                          \
-    list->size++;                                                              \
-    if ((retCode = list->resize(list))) {                                      \
-        list->size--;                                                          \
-        return retCode;                                                        \
-    }                                                                          \
-    memmove(&list->data[index + 1], &list->data[index],                        \
-            (list->len(list) - index) * sizeof(T));                            \
-    list->data[index] = element;                                               \
-    return retCode;                                                            \
-}                                                                              \
-                                                                               \
-static void L##_clear(L list)                                                  \
-{                                                                              \
-    if (!list->data) return;                                                   \
-    free(list->data);                                                          \
-    list->size = 0;                                                            \
-    list->data = NULL;                                                         \
-    list->capacity = 0;                                                        \
-}                                                                              \
-                                                                               \
-static void L##_destroy(L list)                                                \
-{                                                                              \
-    if (!list) return;                                                         \
-    list->clear(list);                                                         \
-    free(list);                                                                \
-}                                                                              \
-                                                                               \
-static void L##_sort(L list, ssize_t left, ssize_t right, compare_func cmp)    \
-{                                                                              \
-    if (left >= right) return;                                                 \
-                                                                               \
-    T pivot = list->data[left + (right - left) / 2];                           \
-    ssize_t i = left;                                                          \
-    ssize_t j = right;                                                         \
-                                                                               \
-    while (i <= j) {                                                           \
-        while (cmp(&list->data[i], &pivot) < 0) i++;                           \
-        while (cmp(&list->data[j], &pivot) > 0) j--;                           \
-                                                                               \
-        if (i <= j) {                                                          \
-            T tmp = list->data[i];                                             \
-            list->data[i] = list->data[j];                                     \
-            list->data[j] = tmp;                                               \
-            i++;                                                               \
-            j--;                                                               \
-        }                                                                      \
-    }                                                                          \
-    L##_sort(list, left, j, cmp);                                              \
-    L##_sort(list, i, right, cmp);                                             \
-}                                                                              \
-                                                                               \
-static int L##_foreach(L list, foreach_func_##L func)                          \
-{                                                                              \
-    if (!list || !list->data || !func) return UNINITIALISED_ARRAY;             \
-                                                                               \
-    int retCode = 0;                                                           \
-    for (ssize_t i = 0; i < list->len(list); i++) {                            \
-        retCode = func(list, i);                                               \
-        if (retCode) return retCode;                                           \
-    }                                                                          \
-    return 0;                                                                  \
-}                                                                              \
-                                                                               \
-static ssize_t L##_find(L list, T element, compare_func cmp)                   \
-{                                                                              \
-    for (ssize_t i = 0; i < list->len(list); i++) {                            \
-        if (cmp(&list->data[i], &element) == 0) return i;                      \
-    }                                                                          \
-    return -1;                                                                 \
-}                                                                              \
-                                                                               \
-static int L##_shuffle(L list, ssize_t left, ssize_t right)                    \
-{                                                                              \
-    if (list->size <= 1) return 0;                                             \
-                                                                               \
-    if (right <= left || left < 0 || right >= list->len(list))                 \
-        return INDEX_OUT_OF_RANGE;                                             \
-                                                                               \
-    srand((unsigned int) time(NULL));                                          \
-                                                                               \
-    for (ssize_t i = right; i > left; i--) {                                   \
-        ssize_t j = rand() % (i + 1);                                          \
-                                                                               \
-        T tmp = list->data[i];                                                 \
-        list->data[i] = list->data[j];                                         \
-        list->data[j] = tmp;                                                   \
-    }                                                                          \
-    return 0;                                                                  \
-}                                                                              \
-                                                                               \
-static void L##_reverse(L list)                                                \
-{                                                                              \
-    for (ssize_t i = 0; i < list->len(list) / 2; i++) {                        \
-        T tmp = list->data[i];                                                 \
-        list->data[i] = list->data[list->len(list) - i - 1];                   \
-        list->data[list->len(list) - i - 1] = tmp;                             \
-    }                                                                          \
-}                                                                              \
-                                                                               \
-static L L##_slice(L list, ssize_t left, ssize_t right, ssize_t step)          \
-{                                                                              \
-    if (left < 0 || right >= list->len(list) || left > right)                  \
-        return NULL;                                                           \
-    if (step < 1) return NULL;                                                 \
-    L new_list = L##_new();                                                    \
-    if (step == 1) {                                                           \
-        new_list->size = (right - left + 1) / step;                            \
-        new_list->resize(new_list);                                            \
-        memmove(new_list->data, &list->data[left],                             \
-            (right - left + 1) * sizeof(T));                                   \
-    } else {                                                                   \
-        for (ssize_t i = left; i <= right; i += step)                          \
-            if(new_list->append(new_list, list->data[i])) return NULL;         \
-    }                                                                          \
-    return new_list;                                                           \
-}                                                                              \
-                                                                               \
-static int L##_resize(L list)                                                  \
-{                                                                              \
-    ssize_t new_capacity = list->capacity;                                     \
-    if (list->size >= list->capacity) {                                        \
-        while (new_capacity <= list->len(list)) {                              \
-            new_capacity = new_capacity ? new_capacity * 2 : 1;                \
-        }                                                                      \
-    } else if (list->len(list) < list->capacity / 4) {                         \
-        while (new_capacity > (list->size * 4)) {                              \
-            new_capacity /= 2;                                                 \
-        }                                                                      \
-    }                                                                          \
-    T *new_data = (T *) realloc(list->data, new_capacity * sizeof(T));         \
-    if (new_data) {                                                            \
-        list->data = new_data;                                                 \
-        list->capacity = new_capacity;                                         \
-        return 0;                                                              \
-    }                                                                          \
-    return MEMORY_ALLOCATION_ERR;                                              \
-}                                                                              \
-                                                                               \
-
-#define LNEW(L) L##_new()
-
-#endif //DATASTRUCTURES_LIST_H
+#endif //LIST_H
