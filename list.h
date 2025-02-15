@@ -7,11 +7,12 @@
 #ifndef LIST_H
 #define LIST_H
 
-#include <assert.h>
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define ASSERT_CRASH(cond) do { if (!(cond)) abort(); } while (0)
 
 size_t next_power_of_two(size_t n) {
     if (n == 0) return 1;
@@ -45,7 +46,7 @@ typedef struct _##LABEL {\
     LABEL (*set)(LABEL, size_t, TYPE);\
     LABEL (*resize)(LABEL);\
     LABEL (*push)(LABEL, TYPE);\
-    void (*destroy)(LABEL);\
+    void (*destroy)(LABEL *);\
     LABEL (*insert)(LABEL, size_t, TYPE);\
     LABEL (*enumerate_for_each)(LABEL, LABEL##_enumerate_for_each_func);\
     LABEL (*enumerate_map)(LABEL, LABEL##_enumerate_map_func);\
@@ -69,7 +70,7 @@ static TYPE LABEL##_get(LABEL, size_t);\
 static LABEL LABEL##_set(LABEL, size_t, TYPE);\
 static LABEL LABEL##_resize(LABEL);\
 static LABEL LABEL##_push(LABEL, TYPE);\
-static void LABEL##_destroy(LABEL);\
+static void LABEL##_destroy(LABEL *);\
 static LABEL LABEL##_insert(LABEL, size_t, TYPE);\
 static LABEL LABEL##_enumerate_for_each(LABEL, LABEL##_enumerate_for_each_func);\
 static LABEL LABEL##_enumerate_map(LABEL, LABEL##_enumerate_map_func);\
@@ -89,7 +90,7 @@ static size_t LABEL##_count(LABEL, TYPE, LABEL##_compare_func);\
 \
 static LABEL LABEL##_new() {\
     LABEL self = (LABEL)calloc(1, sizeof(_##LABEL));\
-    assert(self != NULL);\
+    ASSERT_CRASH(self != NULL);\
     self->data = NULL;\
     self->capacity = 0;\
     self->length = 0;\
@@ -123,25 +124,25 @@ static LABEL LABEL##_new() {\
 }\
 \
 static size_t LABEL##_len(LABEL self) { \
-    assert(self != NULL);\
+    ASSERT_CRASH(self != NULL);\
     return self->length; \
 } \
 static TYPE LABEL##_get(LABEL self, size_t index) {\
-    assert(self != NULL);\
-    assert(index < self->len(self));\
+    ASSERT_CRASH(self != NULL);\
+    ASSERT_CRASH(index < self->len(self));\
     return self->data[index];\
 }\
 static LABEL LABEL##_set(LABEL self, size_t index, TYPE value) { \
-    assert(self != NULL);\
+    ASSERT_CRASH(self != NULL);\
     if (index < 0) {\
     index = self->len(self) - index;\
     }\
-    assert(index < self->len(self) && index >= 0);\
+    ASSERT_CRASH(index < self->len(self) && index >= 0);\
     self->data[index] = value;\
     return self;\
 }\
 static LABEL LABEL##_resize(LABEL self) {\
-    assert(self != NULL);\
+    ASSERT_CRASH(self != NULL);\
     size_t new_cap = self->capacity;\
     size_t lower_threshold = new_cap / 4;\
     if (self->len(self) <= lower_threshold) {\
@@ -151,32 +152,32 @@ static LABEL LABEL##_resize(LABEL self) {\
     }\
     new_cap = new_cap == 0 ? 1 : new_cap;\
     TYPE *new_data = (TYPE *)realloc(self->data, new_cap * sizeof(TYPE));\
-    assert(new_data != NULL);\
+    ASSERT_CRASH(new_data != NULL);\
     self->data = new_data;\
     self->capacity = new_cap;\
     return self;\
 }\
 static LABEL LABEL##__allocate__(LABEL self, size_t new_capacity) {\
-    assert(self != NULL);\
-    assert(new_capacity != 0);\
+    ASSERT_CRASH(self != NULL);\
+    ASSERT_CRASH(new_capacity != 0);\
     if (new_capacity < self->len(self)) {\
         return self;\
     }\
     TYPE *new_data = (TYPE *)realloc(self->data, new_capacity * sizeof(TYPE));\
-    assert(new_data != NULL);\
+    ASSERT_CRASH(new_data != NULL);\
     self->data = new_data;\
     self->capacity = new_capacity;\
     return self;\
 }\
 static LABEL LABEL##_push(LABEL self, TYPE value) {\
-    assert(self != NULL);\
+    ASSERT_CRASH(self != NULL);\
     self->resize(self);\
     self->data[self->len(self)] = value;\
     self->length++;\
     return self;\
 }\
 static LABEL LABEL##_insert(LABEL self, size_t index, TYPE value) {\
-    assert(self != NULL);\
+    ASSERT_CRASH(self != NULL);\
     self->resize(self);\
     memmove(&self->data[index + 1], &self->data[index], sizeof(TYPE) * (self->len(self) - index));\
     self->data[index] = value;\
@@ -184,14 +185,14 @@ static LABEL LABEL##_insert(LABEL self, size_t index, TYPE value) {\
     return self;\
 }\
 static LABEL LABEL##_enumerate_for_each(LABEL self, LABEL##_enumerate_for_each_func func) {\
-    assert(self != NULL);\
+    ASSERT_CRASH(self != NULL);\
     for (size_t i = 0; i < self->len(self); i++) {\
         func(i, self->get(self, i));\
     }\
     return self;\
 }\
 static LABEL LABEL##_enumerate_map(LABEL self, LABEL##_enumerate_map_func func) {\
-    assert(self != NULL);\
+    ASSERT_CRASH(self != NULL);\
     for (size_t i = 0; i < self->len(self); i++) {\
         TYPE new_val = func(self, i, self->get(self, i));\
         self->set(self, i, new_val);\
@@ -199,7 +200,7 @@ static LABEL LABEL##_enumerate_map(LABEL self, LABEL##_enumerate_map_func func) 
     return self;\
 }\
 static LABEL LABEL##_extend_array(LABEL self, TYPE *other, size_t length) {\
-    assert(self != NULL);\
+    ASSERT_CRASH(self != NULL);\
     if (self->len(self) + length > self->capacity) {\
         self->__allocate__(self, next_power_of_two(self->len(self) + length));\
     }\
@@ -208,11 +209,11 @@ static LABEL LABEL##_extend_array(LABEL self, TYPE *other, size_t length) {\
     return self;\
 }\
 static LABEL LABEL##_extend_list(LABEL self, LABEL other) {\
-    assert(self != NULL);\
+    ASSERT_CRASH(self != NULL);\
     return self->extend_array(self, other->data, other->len(other));\
 }\
 static TYPE LABEL##_pop(LABEL self, size_t index) {\
-    assert(self != NULL);\
+    ASSERT_CRASH(self != NULL);\
     TYPE value = self->get(self, index);\
     self->length--;\
     if (index == self->len(self)) {\
@@ -222,9 +223,9 @@ static TYPE LABEL##_pop(LABEL self, size_t index) {\
     return value;\
 }\
 static LABEL LABEL##_display(LABEL self) {\
-    assert(self != NULL);\
+    ASSERT_CRASH(self != NULL);\
     char test[] = FORMAT_SPECIFIER;\
-    assert(strlen(test) != 0);\
+    ASSERT_CRASH(strlen(test) != 0);\
     for (size_t i = 0; i < self->len(self); i++) {\
         if (i == 0) {\
             printf("{");\
@@ -240,8 +241,8 @@ static LABEL LABEL##_display(LABEL self) {\
     return self;\
 }\
 static LABEL LABEL##_slice(LABEL self, size_t start, size_t stop, size_t step) {\
-    assert(self != NULL);\
-    assert(self->len(self) >= stop && start <= stop);\
+    ASSERT_CRASH(self != NULL);\
+    ASSERT_CRASH(self->len(self) >= stop && start <= stop);\
     LABEL sliced = LABEL##_new();\
     for (size_t i = start; i < stop; i += step) {\
         sliced->push(sliced, self->get(self, i));\
@@ -249,7 +250,7 @@ static LABEL LABEL##_slice(LABEL self, size_t start, size_t stop, size_t step) {
     return sliced;\
 }\
 static LABEL LABEL##_copy(LABEL self) {\
-    assert(self != NULL);\
+    ASSERT_CRASH(self != NULL);\
     LABEL new_list = LABEL##_new();\
     new_list->length = self->length;\
     new_list->__allocate__(new_list, self->capacity);\
@@ -257,14 +258,14 @@ static LABEL LABEL##_copy(LABEL self) {\
     return new_list;\
 }\
 static LABEL LABEL##_sort(LABEL self, size_t left, size_t right, LABEL##_compare_func comp) {\
-    assert(self != NULL);\
-    assert(self->data != NULL);\
-    assert(left < self->len(self));\
-    assert(right < self->len(self));\
+    ASSERT_CRASH(self != NULL);\
+    ASSERT_CRASH(self->data != NULL);\
+    ASSERT_CRASH(left < self->len(self));\
+    ASSERT_CRASH(right < self->len(self));\
     if (left >= right || right >= self->len(self)) return self;\
     \
     size_t mid = left + (right - left) / 2;\
-    assert(mid < self->len(self));\
+    ASSERT_CRASH(mid < self->len(self));\
     int pivot = self->data[mid];\
     \
     size_t i = left;\
@@ -293,13 +294,13 @@ static int LABEL##__dumb_random__(TYPE a, TYPE b) {\
     return (rand() % 3) - 1;\
 }\
 static LABEL LABEL##_shuffle(LABEL self) {\
-    assert(self != NULL);\
-    assert(self->data != NULL);\
+    ASSERT_CRASH(self != NULL);\
+    ASSERT_CRASH(self->data != NULL);\
     return self->sort(self, 0, self->len(self) - 1, self->__dumb_random__);\
 }\
 static size_t LABEL##_find(LABEL self, TYPE value, LABEL##_compare_func comp) {\
-    assert(self != NULL);\
-    assert(self->data != NULL);\
+    ASSERT_CRASH(self != NULL);\
+    ASSERT_CRASH(self->data != NULL);\
     for (size_t index = 0; index < self->len(self); index++) {\
         if (comp(self->get(self, index), value) == 0) {\
             return index;\
@@ -308,22 +309,28 @@ static size_t LABEL##_find(LABEL self, TYPE value, LABEL##_compare_func comp) {\
     return self->len(self);\
 }\
 static LABEL LABEL##_clear(LABEL self) {\
-    assert(self != NULL);\
-    assert(self->data != NULL);\
+    ASSERT_CRASH(self != NULL);\
+    ASSERT_CRASH(self->data != NULL);\
     free(self->data);\
     self->data = NULL;\
     self->length = 0;\
     self->capacity = 0;\
     return self;\
 }\
-static void LABEL##_destroy(LABEL self) {\
-    assert(self != NULL);\
-    if (self->data != NULL) free(self->data);\
-    free(self);\
+static void LABEL##_destroy(LABEL *self) {\
+    ASSERT_CRASH(self != NULL);\
+    if (*self == NULL) return;\
+    if ((*self)->data != NULL) {\
+        memset((*self)->data, 0, sizeof(TYPE) * (*self)->len(*self));\
+        free((*self)->data);\
+    }\
+    memset(*self, 0, sizeof(**self));\
+    free(*self);\
+    *self = NULL;\
 }\
 static size_t LABEL##_count(LABEL self, TYPE value, LABEL##_compare_func comp) {\
-    assert(self != NULL);\
-    assert(self->data != NULL);\
+    ASSERT_CRASH(self != NULL);\
+    ASSERT_CRASH(self->data != NULL);\
     size_t count = 0;\
     for (size_t index = 0; index < self->len(self); index++) {\
         if (comp(self->get(self, index), value) == 0) {\
