@@ -14,7 +14,7 @@
 
 #define ASSERT_CRASH(cond) do { if (!(cond)) abort(); } while (0)
 
-size_t next_power_of_two(size_t n) {
+static size_t next_power_of_two(size_t n) {
     if (n == 0) return 1;
     n--;
     n |= n >> 1;
