@@ -243,7 +243,6 @@ static inline int _shuffle_func(const void *a, const void *b) {
     IMPORT_LIST_EXTENSORS(TYPE, NAME);
 
 #define IMPORT_LIST_ALL(TYPE, NAME)                                            \
-    ;                                                                          \
     IMPORT_LIST_STRUCT(TYPE, NAME);                                            \
     IMPORT_LIST_CONSTRUCTOR(TYPE, NAME);                                       \
     IMPORT_LIST_ACCESSORS(TYPE, NAME);                                         \
