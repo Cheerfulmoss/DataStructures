@@ -54,19 +54,19 @@
     CRASH_IF(input == NULL, functionName " -> " inputName " should not be "    \
                                          "null")
 
-static inline size_t fit_cap_to_size(const size_t cap, const size_t size) {
+static inline size_t _fit_cap_to_size(const size_t cap, const size_t size) {
     if (cap == 0)
         return size;
     return ((size + cap - 1) / cap) * cap;
 }
 
-static inline void *resize_array(void *arr, const size_t elemSize, size_t *cap,
-                                 const size_t size) {
-    const size_t newCap = fit_cap_to_size(*cap, size);
+static inline void *_resize_array(void *arr, const size_t elemSize, size_t *cap,
+                                  const size_t size) {
+    const size_t newCap = _fit_cap_to_size(*cap, size);
     void *newDat = arr;
     if (newCap != *cap) {
         newDat = reallocarray(arr, newCap, elemSize);
-        CHECK_NOT_NULL("resize_array", "newDat", newDat);
+        CHECK_NOT_NULL("_resize_array", "newDat", newDat);
         *cap = newCap;
     }
     return newDat;
@@ -123,8 +123,8 @@ static inline int _shuffle_func(const void *a, const void *b) {
 #define IMPORT_LIST_DYNAMIC_FUNCTIONS(TYPE, NAME)                              \
     static void NAME##_append(NAME lst, TYPE value) {                          \
         CHECK_NOT_NULL("append", "lst", lst);                                  \
-        lst->data = resize_array(lst->data, sizeof(TYPE), &lst->capacity,      \
-                                 lst->length + 1);                             \
+        lst->data = _resize_array(lst->data, sizeof(TYPE), &lst->capacity,     \
+                                  lst->length + 1);                            \
         lst->data[lst->length++] = value;                                      \
     }                                                                          \
                                                                                \
@@ -135,8 +135,8 @@ static inline int _shuffle_func(const void *a, const void *b) {
             return;                                                            \
         }                                                                      \
         CHECK_INDEX_OUT_OF_BOUNDS("insert", index, lst->length);               \
-        lst->data = resize_array(lst->data, sizeof(TYPE), &lst->capacity,      \
-                                 lst->length + 1);                             \
+        lst->data = _resize_array(lst->data, sizeof(TYPE), &lst->capacity,     \
+                                  lst->length + 1);                            \
         memmove(&(lst->data[index + 1]), &(lst->data[index]),                  \
                 (lst->length - index) * sizeof(TYPE));                         \
         lst->length++;                                                         \
@@ -184,8 +184,8 @@ static inline int _shuffle_func(const void *a, const void *b) {
         if (length == 0) {                                                     \
             return;                                                            \
         }                                                                      \
-        dst->data = resize_array(dst->data, sizeof(TYPE), &dst->capacity,      \
-                                 dst->length + length);                        \
+        dst->data = _resize_array(dst->data, sizeof(TYPE), &dst->capacity,     \
+                                  dst->length + length);                       \
         memmove(&(dst->data[dst->length]), src, length * sizeof(TYPE));        \
         dst->length += length;                                                 \
     }                                                                          \
@@ -195,8 +195,8 @@ static inline int _shuffle_func(const void *a, const void *b) {
         if (src->length == 0) {                                                \
             return;                                                            \
         }                                                                      \
-        dst->data = resize_array(dst->data, sizeof(TYPE), &dst->capacity,      \
-                                 dst->length + src->length);                   \
+        dst->data = _resize_array(dst->data, sizeof(TYPE), &dst->capacity,     \
+                                  dst->length + src->length);                  \
         memmove(&(dst->data[dst->length]), &(src->data[0]),                    \
                 src->length * sizeof(TYPE));                                   \
         dst->length += src->length;                                            \
@@ -229,26 +229,27 @@ static inline int _shuffle_func(const void *a, const void *b) {
         qsort(&(lst->data[start]), end, sizeof(TYPE), _shuffle_func);          \
     }
 
-#define IMPORT_LIST_BASIC(TYPE, NAME) \
-    IMPORT_LIST_STRUCT(TYPE, NAME); \
-    IMPORT_LIST_CONSTRUCTOR(TYPE, NAME); \
-    IMPORT_LIST_ACCESSORS(TYPE, NAME); \
-    IMPORT_LIST_DYNAMIC_FUNCTIONS(TYPE, NAME); \
+#define IMPORT_LIST_BASIC(TYPE, NAME)                                          \
+    IMPORT_LIST_STRUCT(TYPE, NAME);                                            \
+    IMPORT_LIST_CONSTRUCTOR(TYPE, NAME);                                       \
+    IMPORT_LIST_ACCESSORS(TYPE, NAME);                                         \
+    IMPORT_LIST_DYNAMIC_FUNCTIONS(TYPE, NAME);
 
-#define IMPORT_LIST_DYNAMIC_ARRAY(TYPE, NAME) \
-    IMPORT_LIST_STRUCT(TYPE, NAME); \
-    IMPORT_LIST_CONSTRUCTOR(TYPE, NAME); \
-    IMPORT_LIST_ACCESSORS(TYPE, NAME); \
-    IMPORT_LIST_DYNAMIC_FUNCTIONS(TYPE, NAME); \
+#define IMPORT_LIST_DYNAMIC_ARRAY(TYPE, NAME)                                  \
+    IMPORT_LIST_STRUCT(TYPE, NAME);                                            \
+    IMPORT_LIST_CONSTRUCTOR(TYPE, NAME);                                       \
+    IMPORT_LIST_ACCESSORS(TYPE, NAME);                                         \
+    IMPORT_LIST_DYNAMIC_FUNCTIONS(TYPE, NAME);                                 \
     IMPORT_LIST_EXTENSORS(TYPE, NAME);
 
-#define IMPORT_LIST_ALL(TYPE, NAME); \
-    IMPORT_LIST_STRUCT(TYPE, NAME); \
-    IMPORT_LIST_CONSTRUCTOR(TYPE, NAME); \
-    IMPORT_LIST_ACCESSORS(TYPE, NAME); \
-    IMPORT_LIST_DYNAMIC_FUNCTIONS(TYPE, NAME); \
-    IMPORT_LIST_EXTENSORS(TYPE, NAME); \
-    IMPORT_LIST_MAPS(TYPE, NAME); \
-    IMPORT_LIST_COMPARATORS(TYPE, NAME); \
+#define IMPORT_LIST_ALL(TYPE, NAME)                                            \
+    ;                                                                          \
+    IMPORT_LIST_STRUCT(TYPE, NAME);                                            \
+    IMPORT_LIST_CONSTRUCTOR(TYPE, NAME);                                       \
+    IMPORT_LIST_ACCESSORS(TYPE, NAME);                                         \
+    IMPORT_LIST_DYNAMIC_FUNCTIONS(TYPE, NAME);                                 \
+    IMPORT_LIST_EXTENSORS(TYPE, NAME);                                         \
+    IMPORT_LIST_MAPS(TYPE, NAME);                                              \
+    IMPORT_LIST_COMPARATORS(TYPE, NAME);
 
 #endif // LIST_H
